@@ -1,0 +1,10 @@
+.gradle/**
+.idea/**
+.metals/**
+.vscode/**
+.settings/**
+build/**
+bin/**
+lib/**
+.classpath
+.project

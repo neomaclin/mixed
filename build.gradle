@@ -1,0 +1,113 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        google()
+
+    }
+}
+
+plugins {
+    id 'java'
+    id 'scala'
+    id 'groovy'
+    id "nebula.clojure" version "9.1.0"
+    id "org.jetbrains.kotlin.jvm" version "1.3.50"
+    id 'application'
+    id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
+}
+
+mainClassName = "org.demo.core.Main"
+
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java']
+        kotlin.srcDirs += ['src/main/kotlin', 'src/main/java','src/main/clojure']
+        groovy.srcDirs += ['src/main/groovy', 'src/main/java','src/main/clojure']
+        clojure.srcDirs += ['src/main/clojure', 'src/main/java']
+        scala.srcDirs += ['src/main/scala', 'src/main/java']
+    }
+}
+
+def classes = [compileKotlin.destinationDir, compileClojure.destinationDir, compileGroovy.destinationDir]
+
+compileScala.classpath += files(classes)
+
+task(compile) {
+    compileScala
+}
+
+group 'org.demo.mixed'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    google()
+}
+ext {
+    scalaVersion = "2.13"
+    akkaVersion = "2.5.24"
+    catsVersion = "2.0.0"
+}
+
+dependencies {
+
+
+    implementation 'org.clojure:clojure:1.10.1'
+    implementation 'org.scala-lang:scala-library:2.13.1'
+    implementation 'org.codehaus.groovy:groovy-all:2.5.8'
+
+    implementation(
+            ['cats-core', 'cats-free', 'cats-effect', 'kittens'].collect {
+                [group: 'org.typelevel', name: it + '_' + scalaVersion, version: catsVersion]
+            }
+    )
+
+    implementation "io.monix:monix_${scalaVersion}:3.0.0"
+    implementation "com.chuusai:shapeless_${scalaVersion}:2.3.3"
+    //implementation group: 'org.scalaz', name: "scalaz-zio_${scalaVersion}", version: '1.0.0'
+
+    implementation(
+            ['akka-actor',
+             'akka-stream',
+             'akka-cluster-sharding',
+             'akka-cluster-metrics',
+             'akka-cluster-tools',
+             'akka-distributed-data',
+             'akka-persistence',
+             'akka-persistence-query'].collect {
+                [group: 'com.typesafe.akka', name: it + '_' + scalaVersion, version: akkaVersion]
+            }
+    )
+
+    testImplementation(
+            ['akka-testkit',
+             'akka-stream-testkit',
+             'akka-multi-node-testkit'].collect {
+                [group: 'com.typesafe.akka', name: it + '_' + scalaVersion, version: akkaVersion]
+            }
+    )
+
+    testImplementation(
+            [group: 'junit', name: 'junit', version: '4.12'],
+            [group: "org.scalacheck", name: "scalacheck_" + scalaVersion, version: "1.14.0"],
+            [group: "org.scalatest", name: "scalatest_" + scalaVersion, version: "3.0.8"],
+            [group: "org.scalamock", name: "scalamock_" + scalaVersion, version: "4.4.0"],
+            [group: "com.storm-enroute", name: "scalameter_" + scalaVersion, version: "0.19"],
+            [group: "org.testng", name: "testng", version: "7.0.0"],
+            [group: "net.aichler", name: "jupiter-interface", version: "0.8.2"],
+            [group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.5.2"],
+            [group: "com.github.alexarchambault", name: "scalacheck-shapeless_1.14_" + scalaVersion, version: "1.2.3"]
+    )
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation(
+            ['jmh-core',
+             'jmh-core-benchmarks',
+             'jmh-generator-annprocess'].collect {
+                [group: 'org.openjdk.jmh', name: it, version: '1.21']
+            }
+    )
+}
+
