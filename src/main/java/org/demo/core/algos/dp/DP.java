@@ -1,8 +1,11 @@
 package org.demo.core.algos.dp;
 
-public class Fib {
+import java.util.TreeSet;
+
+public class DP {
 
   public static long fib(Long n) {
+
     if (n == 0) return 0;
     long a, b, last;
     a = last = 0L;
@@ -16,4 +19,5 @@ public class Fib {
     }
     return last;
   }
+
 }

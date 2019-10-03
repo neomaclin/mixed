@@ -17,21 +17,25 @@ plugins {
     id "me.champeau.gradle.jmh" version "0.5.0-rc-2"
 }
 
-mainClassName = "org.demo.core.Main"
+mainClassName = "org.demo.core.WebApp"
 
 sourceSets {
     main {
         java.srcDirs = ['src/main/java']
-        kotlin.srcDirs += ['src/main/kotlin', 'src/main/java','src/main/clojure']
-        groovy.srcDirs += ['src/main/groovy', 'src/main/java','src/main/clojure']
+        kotlin.srcDirs += ['src/main/kotlin', 'src/main/java', 'src/main/clojure']
+        groovy.srcDirs += ['src/main/groovy', 'src/main/java', 'src/main/clojure']
         clojure.srcDirs += ['src/main/clojure', 'src/main/java']
         scala.srcDirs += ['src/main/scala', 'src/main/java']
     }
+
 }
 
 def classes = [compileKotlin.destinationDir, compileClojure.destinationDir, compileGroovy.destinationDir]
 
 compileScala.classpath += files(classes)
+compileScala.scalaCompileOptions.additionalParameters = ["-language:implicitConversions",
+                                                         "-language:higherKinds",
+                                                         "-language:postfixOps"]
 
 task(compile) {
     compileScala
@@ -49,7 +53,11 @@ ext {
     scalaVersion = "2.13"
     akkaVersion = "2.5.24"
     catsVersion = "2.0.0"
+    naming = { "${it}_${scalaVersion}" }
+    naming12 = { "${it}_2.12" }
+    circeVersion = "0.12.1"
 }
+
 
 dependencies {
 
@@ -57,16 +65,45 @@ dependencies {
     implementation 'org.clojure:clojure:1.10.1'
     implementation 'org.scala-lang:scala-library:2.13.1'
     implementation 'org.codehaus.groovy:groovy-all:2.5.8'
+    implementation 'com.netflix.servo:servo-core:0.12.17'
 
     implementation(
-            ['cats-core', 'cats-free', 'cats-effect', 'kittens'].collect {
-                [group: 'org.typelevel', name: it + '_' + scalaVersion, version: catsVersion]
+            ['spark-core', 'spark-sql'].collect {
+                [group: 'org.apache.spark', name: naming12(it), version: '2.4.4']
+            }
+    )
+
+    implementation(
+            ["circe-core", "circe-generic", "circe-parser"].collect {
+                [group: "io.circe", name: naming12(it), version: circeVersion]
+            }
+    )
+
+    implementation(
+            ['cats-core',
+             'cats-free',
+             'cats-effect',
+             'kittens'].collect {
+                [group: 'org.typelevel', name: naming(it), version: catsVersion]
             }
     )
 
     implementation "io.monix:monix_${scalaVersion}:3.0.0"
     implementation "com.chuusai:shapeless_${scalaVersion}:2.3.3"
-    //implementation group: 'org.scalaz', name: "scalaz-zio_${scalaVersion}", version: '1.0.0'
+    implementation(
+            [group: 'dev.zio', name: 'zio' + '_' + scalaVersion, version: '1.0.0-RC13'],
+            //[group: 'dev.zio', name: 'zio-interop-cats' + '_' + scalaVersion, version: '2.0.0.0-RC4'],
+            //[group: 'dev.zio', name: 'zio-interop-monix' + '_' + scalaVersion, version: 'v3.0.0.0-RC6']
+    )
+
+
+    implementation(
+            ['fs2-core',
+             'fs2-io'].collect {
+                [group: 'co.fs2', name: naming(it), version: '2.0.1']
+            }
+    )
+
 
     implementation(
             ['akka-actor',
@@ -77,31 +114,37 @@ dependencies {
              'akka-distributed-data',
              'akka-persistence',
              'akka-persistence-query'].collect {
-                [group: 'com.typesafe.akka', name: it + '_' + scalaVersion, version: akkaVersion]
+                [group: 'com.typesafe.akka', name: naming(it), version: akkaVersion]
             }
     )
-
+    implementation(
+            [group: 'com.typesafe.akka', name: "akka-http_2.13", version: "10.1.10"],
+            [group: 'de.heikoseeberger', name: "akka-http-circe_2.12", version: "1.28.0"],
+    )
     testImplementation(
             ['akka-testkit',
              'akka-stream-testkit',
              'akka-multi-node-testkit'].collect {
-                [group: 'com.typesafe.akka', name: it + '_' + scalaVersion, version: akkaVersion]
+                [group: 'com.typesafe.akka', name: naming(it), version: akkaVersion]
             }
     )
 
+    testImplementation( //Junit
+            [group: "org.testng", name: "testng", version: "7.0.0"],
+            [group: "net.aichler", name: "jupiter-interface", version: "0.8.2"],
+            [group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.5.2"]
+    )
+
     testImplementation(
-            [group: 'junit', name: 'junit', version: '4.12'],
             [group: "org.scalacheck", name: "scalacheck_" + scalaVersion, version: "1.14.0"],
             [group: "org.scalatest", name: "scalatest_" + scalaVersion, version: "3.0.8"],
             [group: "org.scalamock", name: "scalamock_" + scalaVersion, version: "4.4.0"],
             [group: "com.storm-enroute", name: "scalameter_" + scalaVersion, version: "0.19"],
-            [group: "org.testng", name: "testng", version: "7.0.0"],
-            [group: "net.aichler", name: "jupiter-interface", version: "0.8.2"],
-            [group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.5.2"],
             [group: "com.github.alexarchambault", name: "scalacheck-shapeless_1.14_" + scalaVersion, version: "1.2.3"]
     )
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
     implementation(
             ['jmh-core',
              'jmh-core-benchmarks',
