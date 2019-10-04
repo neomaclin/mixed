@@ -121,6 +121,9 @@ dependencies {
             [group: 'com.typesafe.akka', name: "akka-http_2.13", version: "10.1.10"],
             [group: 'de.heikoseeberger', name: "akka-http-circe_2.12", version: "1.28.0"],
     )
+
+    //implementation group: "com.47deg" , name: "fetch_2.12", version: "1.2.0"
+
     testImplementation(
             ['akka-testkit',
              'akka-stream-testkit',
