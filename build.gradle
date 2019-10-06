@@ -8,6 +8,7 @@ buildscript {
 }
 
 plugins {
+    id 'idea'
     id 'java'
     id 'scala'
     id 'groovy'
@@ -33,7 +34,9 @@ sourceSets {
 def classes = [compileKotlin.destinationDir, compileClojure.destinationDir, compileGroovy.destinationDir]
 
 compileScala.classpath += files(classes)
-compileScala.scalaCompileOptions.additionalParameters = ["-language:implicitConversions",
+compileScala.scalaCompileOptions.additionalParameters = ["-Ywarn-dead-code", "-feature",
+                                                         "-language:existentials",
+                                                         "-language:implicitConversions",
                                                          "-language:higherKinds",
                                                          "-language:postfixOps"]
 
@@ -51,33 +54,30 @@ repositories {
 }
 ext {
     scalaVersion = "2.13"
-    akkaVersion = "2.5.24"
+    akkaVersion = "2.5.25"
     catsVersion = "2.0.0"
     naming = { "${it}_${scalaVersion}" }
     naming12 = { "${it}_2.12" }
     circeVersion = "0.12.1"
+
 }
 
 
 dependencies {
-
 
     implementation 'org.clojure:clojure:1.10.1'
     implementation 'org.scala-lang:scala-library:2.13.1'
     implementation 'org.codehaus.groovy:groovy-all:2.5.8'
     implementation 'com.netflix.servo:servo-core:0.12.17'
 
-    implementation(
-            ['spark-core', 'spark-sql'].collect {
-                [group: 'org.apache.spark', name: naming12(it), version: '2.4.4']
-            }
-    )
+   implementation(
+           ['spark-core', 'spark-sql'].collect {
+               [group: 'org.apache.spark', name: naming12(it), version: '2.4.4']
+           }
+   )
 
-    implementation(
-            ["circe-core", "circe-generic", "circe-parser"].collect {
-                [group: "io.circe", name: naming12(it), version: circeVersion]
-            }
-    )
+
+    implementation "com.chuusai:shapeless_${scalaVersion}:2.3.3"
 
     implementation(
             ['cats-core',
@@ -89,9 +89,9 @@ dependencies {
     )
 
     implementation "io.monix:monix_${scalaVersion}:3.0.0"
-    implementation "com.chuusai:shapeless_${scalaVersion}:2.3.3"
-    implementation(
-            [group: 'dev.zio', name: 'zio' + '_' + scalaVersion, version: '1.0.0-RC13'],
+
+    implementation( //zio
+            [group: 'dev.zio', name: 'zio' + '_' + scalaVersion, version: '1.0.0-RC14'],
             //[group: 'dev.zio', name: 'zio-interop-cats' + '_' + scalaVersion, version: '2.0.0.0-RC4'],
             //[group: 'dev.zio', name: 'zio-interop-monix' + '_' + scalaVersion, version: 'v3.0.0.0-RC6']
     )
@@ -105,7 +105,7 @@ dependencies {
     )
 
 
-    implementation(
+    implementation( // Akka
             ['akka-actor',
              'akka-stream',
              'akka-cluster-sharding',
@@ -116,15 +116,26 @@ dependencies {
              'akka-persistence-query'].collect {
                 [group: 'com.typesafe.akka', name: naming(it), version: akkaVersion]
             }
+
     )
-    implementation(
+
+
+    implementation( //akka-http
             [group: 'com.typesafe.akka', name: "akka-http_2.13", version: "10.1.10"],
-            [group: 'de.heikoseeberger', name: "akka-http-circe_2.12", version: "1.28.0"],
+            [group: 'de.heikoseeberger', name: "akka-http-circe_2.13", version: "1.28.0"],
+    )
+    implementation( //Json lib
+            ["circe-core", "circe-generic", "circe-parser"].collect {
+                [group: "io.circe", name: naming(it), version: circeVersion]
+            }
     )
 
-    //implementation group: "com.47deg" , name: "fetch_2.12", version: "1.2.0"
+    implementation "org.postgresql:postgresql:42.2.8"
+    //implementation "io.getquill:quill-jdbc_2.12:3.4.9"
+    implementation group: "com.47deg", name: "fetch_2.12", version: "1.2.0"
+    implementation group: 'redis.clients', name: 'jedis', version: '3.1.0'
 
-    testImplementation(
+    testImplementation( //Akka Testing
             ['akka-testkit',
              'akka-stream-testkit',
              'akka-multi-node-testkit'].collect {
@@ -138,7 +149,7 @@ dependencies {
             [group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.5.2"]
     )
 
-    testImplementation(
+    testImplementation( //Validation
             [group: "org.scalacheck", name: "scalacheck_" + scalaVersion, version: "1.14.0"],
             [group: "org.scalatest", name: "scalatest_" + scalaVersion, version: "3.0.8"],
             [group: "org.scalamock", name: "scalamock_" + scalaVersion, version: "4.4.0"],
