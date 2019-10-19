@@ -1,7 +1,6 @@
 package org.demo.core
 
 import cats.effect._
-import cats.syntax.all._
 import cats.implicits._
 import scala.io.StdIn
 
@@ -14,10 +13,7 @@ object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] = {
     (
-      for {
-        name <- IO(println("请输入姓名：")) *> IO(StdIn.readLine())
-        result <- IO(println("您的姓名是：" + name))
-      } yield result
+      (IO(println("请输入姓名：")) *> IO(StdIn.readLine()) ).>>=(name => IO(println("您的姓名是：" + name)))
     ) as ExitCode.Success
   }
 
